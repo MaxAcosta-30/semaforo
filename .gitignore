@@ -24,3 +24,6 @@ test-results/
 # notas personales que no deben publicarse
 software-maestro*.md
 .claude/settings.local.json
+
+# caché local de herramientas de diseño
+.impeccable/
