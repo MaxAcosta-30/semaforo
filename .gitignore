@@ -8,6 +8,7 @@ coverage/
 next-env.d.ts
 
 # entorno y secretos
+*.pem
 .env*
 !.env.example
 
