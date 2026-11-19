@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: semaforo
+          POSTGRES_PASSWORD: semaforo
+          POSTGRES_DB: semaforo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U semaforo -d semaforo"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+
+    env:
+      # Base efímera del job; no es un secreto.
+      DATABASE_URL: postgres://semaforo:semaforo@localhost:5432/semaforo
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Formato
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Tipos
+        run: pnpm typecheck
+
+      - name: Migraciones
+        run: pnpm db:migrate
+
+      - name: Pruebas
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
