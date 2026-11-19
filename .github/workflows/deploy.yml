@@ -1,0 +1,57 @@
+name: Deploy
+
+# Producción solo sale de aquí: pruebas → migraciones → vercel deploy --prod.
+# Vercel tiene apagado el despliegue automático de main (vercel.json).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Un despliegue a la vez y sin cancelar uno a medias: una migración cortada deja la base inconsistente.
+concurrency:
+  group: deploy-produccion
+  cancel-in-progress: false
+
+jobs:
+  verificar:
+    uses: ./.github/workflows/ci.yml
+
+  desplegar:
+    needs: verificar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Migraciones (session pooler, puerto 5432)
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_MIGRATIONS }}
+
+      - name: Traer configuración de Vercel
+        run: npx --yes vercel@66.4.0 pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      - name: Build
+        run: npx --yes vercel@66.4.0 build --prod --token="$VERCEL_TOKEN"
+
+      - name: Desplegar
+        run: npx --yes vercel@66.4.0 deploy --prebuilt --prod --token="$VERCEL_TOKEN"
