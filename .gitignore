@@ -1,0 +1,25 @@
+# dependencias y build
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# entorno y secretos
+.env*
+!.env.example
+
+# pruebas
+playwright-report/
+test-results/
+
+# varios
+.DS_Store
+*.log
+.vercel/
+
+# notas personales que no deben publicarse
+software-maestro*.md
+.claude/settings.local.json
