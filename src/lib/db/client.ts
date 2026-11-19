@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
@@ -17,4 +18,14 @@ let db: ReturnType<typeof createDb> | undefined;
 export function getDb() {
   db ??= createDb();
   return db;
+}
+
+export async function isDbReachable(): Promise<boolean> {
+  try {
+    await getDb().execute(sql`select 1`);
+    return true;
+  } catch (error) {
+    console.error("db: la base de datos no respondió", error);
+    return false;
+  }
 }
