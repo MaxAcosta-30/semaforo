@@ -18,10 +18,10 @@ test("entrar como demo, abrir un producto y ver el semáforo con su motivo", asy
   await expect(fila.getByText("Hay un incidente abierto.")).toBeVisible();
 
   await page.getByRole("link", { name: "API de ejemplo" }).click();
-  await expect(
-    page.getByRole("heading", { name: "API de ejemplo" }),
-  ).toBeVisible();
-  await expect(page.getByText("Hay un incidente abierto.")).toBeVisible();
+  // Acotado a la sección del producto: durante la navegación la fila del tablero sigue en el DOM.
+  const detalle = page.getByRole("region", { name: "API de ejemplo" });
+  await expect(detalle.getByText("Rojo · alto")).toBeVisible();
+  await expect(detalle.getByText("Hay un incidente abierto.")).toBeVisible();
   await expect(
     page.getByText("Respondió 500; se esperaba 200 · en curso"),
   ).toBeVisible();
