@@ -28,6 +28,6 @@ describe("POST /api/monitor/run", () => {
     vi.stubEnv("MONITOR_SECRET", SECRET);
     const res = await POST(request(`Bearer ${SECRET}`));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ checked: 0 });
+    expect(await res.json()).toMatchObject({ checked: 0, failed: 0 });
   });
 });

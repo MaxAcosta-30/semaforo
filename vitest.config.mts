@@ -11,5 +11,7 @@ export default defineConfig({
   test: {
     include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
     environment: "node",
+    // Las pruebas de integración comparten la base de compose.yaml: un archivo a la vez.
+    fileParallelism: false,
   },
 });

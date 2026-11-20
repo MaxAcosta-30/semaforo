@@ -1,6 +1,11 @@
+import { getDb } from "@/lib/db/client";
 import { isMonitorAuthorized } from "@/lib/monitor/auth";
+import { ejecutarMonitor } from "@/lib/monitor/ejecutar";
 
-// Etapa 1: solo comprueba que GitHub Actions llega con el secreto. Las revisiones llegan en el caso 3.
+// Vercel Hobby permite hasta 300 s por función; cada petición tiene timeout de 10 s.
+export const maxDuration = 300;
+
+// GitHub Actions lo llama cada 15 minutos (monitor.yml) con MONITOR_SECRET.
 export async function POST(request: Request) {
   if (
     !isMonitorAuthorized(
@@ -11,5 +16,11 @@ export async function POST(request: Request) {
     return Response.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  return Response.json({ checked: 0 });
+  const r = await ejecutarMonitor(getDb());
+  return Response.json({
+    checked: r.revisados,
+    failed: r.fallidos,
+    incidentsOpened: r.incidentesAbiertos,
+    incidentsClosed: r.incidentesCerrados,
+  });
 }
