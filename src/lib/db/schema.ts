@@ -41,6 +41,8 @@ export const products = pgTable("products", {
   slug: text("slug").notNull().unique(),
   repo: text("repo").notNull(), // "dueño/repositorio" en GitHub
   isPublic: boolean("is_public").notNull().default(false),
+  // Caso 6: la versión que se está preparando; la checklist y la aprobación son de esta versión.
+  versionCandidata: text("version_candidata").notNull().default("v1.0.0"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -143,3 +145,36 @@ export const rateLimits = pgTable("rate_limits", {
   inicio: timestamp("inicio", { withTimezone: true }).notNull(),
   conteo: integer("conteo").notNull(),
 }).enableRLS();
+
+// Caso 6: la checklist manual se marca por versión. Los renglones son fijos (CHECKLIST en
+// src/lib/aprobaciones.ts); aquí solo se guarda quién marcó cada uno y cuándo.
+export const checklistMarks = pgTable(
+  "checklist_marks",
+  {
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    version: text("version").notNull(),
+    item: text("item").notNull(),
+    marcadoPor: text("marcado_por").notNull(),
+    marcadoAt: timestamp("marcado_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.productId, t.version, t.item] })],
+).enableRLS();
+
+// Caso 6: aprobar guarda quién, cuándo y el color con sus motivos en ese momento.
+export const releaseApprovals = pgTable(
+  "release_approvals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    version: text("version").notNull(),
+    aprobadoPor: text("aprobado_por").notNull(),
+    aprobadoAt: timestamp("aprobado_at", { withTimezone: true }).notNull(),
+    color: text("color").notNull(),
+    motivos: jsonb("motivos").notNull(),
+  },
+  (t) => [unique("uq_release_approvals_version").on(t.productId, t.version)],
+).enableRLS();
