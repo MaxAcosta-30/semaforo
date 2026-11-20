@@ -1,0 +1,1119 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Semáforo · Prototipo de diseño (Enclavamiento)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ===== Tokens: un cuadro de mando ferroviario (Dirección A · Enclavamiento) ===== */
+      :root {
+        color-scheme: light;
+        --esmalte: #efede4; /* fondo del cuadro */
+        --placa: #f8f7f1; /* superficies */
+        --hundido: #e5e2d6; /* campos y zonas hundidas */
+        --via: #1c1f1e; /* tinta principal y la vía dibujada */
+        --via-2: #474b48; /* texto secundario */
+        --tenue: #63675f; /* metadatos (≥ 4.5:1 sobre placa) */
+        --riel: rgba(28, 31, 30, 0.14);
+        --riel-fuerte: rgba(28, 31, 30, 0.28);
+        --laton: #7d6228; /* foco y enlaces: el latón de las placas */
+        --lente-verde: #0e8a3a;
+        --texto-verde: #0b6b2e;
+        --lente-ambar: #e0a100;
+        --texto-ambar: #6e4d00;
+        --lente-rojo: #c8322b;
+        --texto-rojo: #a12620;
+        --lente-apagada: #3a3e3b;
+        --caja: #1c1f1e; /* la caja de la señal: siempre oscura */
+        --aro-caja: transparent;
+        --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+        --sans: "IBM Plex Sans", system-ui, sans-serif;
+        --mono: "IBM Plex Mono", ui-monospace, monospace;
+        --r-s: 4px;
+        --r-m: 8px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          color-scheme: dark;
+          --esmalte: #111312;
+          --placa: #191c1a;
+          --hundido: #0c0e0d;
+          --via: #eceae1;
+          --via-2: #bdbaaf;
+          --tenue: #95928a;
+          --riel: rgba(236, 234, 225, 0.11);
+          --riel-fuerte: rgba(236, 234, 225, 0.24);
+          --laton: #d2ad5c;
+          --lente-verde: #22b455;
+          --texto-verde: #5fd58a;
+          --lente-ambar: #f2b630;
+          --texto-ambar: #f2b630;
+          --lente-rojo: #e5544b;
+          --texto-rojo: #f27a72;
+          --lente-apagada: #3a3f3c;
+          --aro-caja: rgba(236, 234, 225, 0.22);
+        }
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --esmalte: #111312;
+        --placa: #191c1a;
+        --hundido: #0c0e0d;
+        --via: #eceae1;
+        --via-2: #bdbaaf;
+        --tenue: #95928a;
+        --riel: rgba(236, 234, 225, 0.11);
+        --riel-fuerte: rgba(236, 234, 225, 0.24);
+        --laton: #d2ad5c;
+        --lente-verde: #22b455;
+        --texto-verde: #5fd58a;
+        --lente-ambar: #f2b630;
+        --texto-ambar: #f2b630;
+        --lente-rojo: #e5544b;
+        --texto-rojo: #f27a72;
+        --lente-apagada: #3a3f3c;
+        --aro-caja: rgba(236, 234, 225, 0.22);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-font-smoothing: antialiased;
+      }
+      body {
+        margin: 0;
+        background: var(--esmalte);
+        color: var(--via);
+        font: 15px/1.5 var(--sans);
+      }
+      a {
+        color: var(--laton);
+        text-underline-offset: 3px;
+      }
+      :focus-visible {
+        outline: 2px solid var(--laton);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        text-wrap: balance;
+      }
+      p {
+        margin: 0;
+        text-wrap: pretty;
+      }
+      .num {
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+      }
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+
+      /* ===== Placa de estación (encabezado) ===== */
+      .placa-estacion {
+        border-bottom: 1px solid var(--riel);
+        background: var(--placa);
+      }
+      .placa-estacion .dentro {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .marca {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 22px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: var(--via);
+      }
+      .marca svg {
+        width: 14px;
+        height: 30px;
+      }
+      .monitor-estado {
+        margin-left: auto;
+        font-size: 13px;
+        color: var(--via-2);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .punto {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--lente-verde);
+        box-shadow: 0 0 0 3px
+          color-mix(in oklab, var(--lente-verde) 25%, transparent);
+      }
+      .boton {
+        font: 500 14px/1 var(--sans);
+        min-height: 40px;
+        padding: 0 14px;
+        border-radius: var(--r-s);
+        border: 1px solid var(--riel-fuerte);
+        background: var(--placa);
+        color: var(--via);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
+      }
+      .boton:active {
+        transform: scale(0.97);
+      }
+      .boton.primario {
+        background: var(--via);
+        color: var(--placa);
+        border-color: var(--via);
+      }
+      .boton:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+      @media (hover: hover) and (pointer: fine) {
+        .boton:not(:disabled):hover {
+          border-color: var(--via);
+        }
+        .boton.primario:not(:disabled):hover {
+          background: color-mix(in oklab, var(--via) 88%, var(--placa));
+        }
+      }
+
+      main {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 32px 16px 80px;
+      }
+      .pantalla {
+        margin-bottom: 72px;
+      }
+      .rotulo-pantalla {
+        font: 500 12px var(--mono);
+        color: var(--tenue);
+        border-top: 1px dashed var(--riel-fuerte);
+        padding-top: 8px;
+        margin-bottom: 20px;
+      }
+
+      /* ===== Tablero ===== */
+      .titular {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+      .titular h1 {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: clamp(36px, 6vw, 56px);
+        line-height: 0.95;
+        letter-spacing: -0.01em;
+        text-transform: uppercase;
+      }
+      .recuento {
+        display: flex;
+        gap: 16px;
+        font-size: 14px;
+        color: var(--via-2);
+        flex-wrap: wrap;
+      }
+      .recuento span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .cuadro {
+        background: var(--placa);
+        border: 1px solid var(--riel);
+        border-radius: var(--r-m);
+      }
+      .vias {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .via-fila {
+        display: grid;
+        grid-template-columns: minmax(150px, 1.1fr) minmax(260px, 2.4fr) minmax(
+            210px,
+            1.2fr
+          );
+        gap: 20px;
+        align-items: center;
+        padding: 18px 20px;
+        border-top: 1px solid var(--riel);
+      }
+      .via-fila:first-child {
+        border-top: 0;
+      }
+      .via-fila h2 {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .via-fila h2 a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .via-fila h2 a:hover {
+        text-decoration: underline;
+      }
+      .repo {
+        font: 400 12px var(--mono);
+        color: var(--tenue);
+      }
+
+      /* La firma: 24 bloques de vía (una hora cada uno) */
+      .tramo {
+        display: grid;
+        grid-template-columns: repeat(24, 1fr);
+        gap: 2px;
+        align-items: end;
+        height: 22px;
+        position: relative;
+      }
+      .tramo::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 2px;
+        background: var(--via);
+        opacity: 0.85;
+      }
+      .bloque {
+        height: 4px;
+        background: var(--via);
+        border-radius: 1px 1px 0 0;
+        position: relative;
+        z-index: 1;
+      }
+      .bloque.lento {
+        height: 10px;
+        background: var(--lente-ambar);
+      }
+      .bloque.falla {
+        height: 18px;
+        background: var(--lente-rojo);
+      }
+      .bloque.sin-datos {
+        height: 4px;
+        background: repeating-linear-gradient(
+          90deg,
+          var(--riel-fuerte) 0 3px,
+          transparent 3px 6px
+        );
+      }
+      .leyenda-tramo {
+        display: flex;
+        justify-content: space-between;
+        font: 400 11px var(--mono);
+        color: var(--tenue);
+        margin-top: 6px;
+      }
+
+      /* Señal de tres lentes: rojo arriba, ámbar, verde abajo (orden ferroviario) */
+      .senal-y-motivo {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+      .senal {
+        flex: none;
+        width: 22px;
+        padding: 4px;
+        background: var(--caja);
+        box-shadow: 0 0 0 1px var(--aro-caja);
+        border-radius: 11px;
+        display: grid;
+        gap: 4px;
+      }
+      .lente {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--lente-apagada);
+      }
+      .lente.r {
+        background: var(--lente-rojo);
+      }
+      .lente.a {
+        background: var(--lente-ambar);
+      }
+      .lente.v {
+        background: var(--lente-verde);
+      }
+      .senal:not([data-color="rojo"]) .lente.r,
+      .senal:not([data-color="amarillo"]) .lente.a,
+      .senal:not([data-color="verde"]) .lente.v {
+        background: var(--lente-apagada);
+      }
+      .veredicto {
+        font-weight: 600;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .veredicto svg {
+        width: 16px;
+        height: 16px;
+        flex: none;
+      }
+      .veredicto.verde {
+        color: var(--texto-verde);
+      }
+      .veredicto.amarillo {
+        color: var(--texto-ambar);
+      }
+      .veredicto.rojo {
+        color: var(--texto-rojo);
+      }
+      .motivo {
+        font-size: 13px;
+        color: var(--via-2);
+      }
+      .disponibilidad {
+        font: 500 13px var(--mono);
+        color: var(--via-2);
+      }
+
+      /* Estados */
+      .estados {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+      }
+      .estado {
+        padding: 20px;
+        display: grid;
+        gap: 10px;
+        align-content: start;
+      }
+      .estado h3 {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .estado p {
+        font-size: 14px;
+        color: var(--via-2);
+      }
+      .esqueleto {
+        height: 12px;
+        border-radius: 3px;
+        background: linear-gradient(
+          90deg,
+          var(--hundido) 0%,
+          color-mix(in oklab, var(--hundido) 60%, var(--placa)) 50%,
+          var(--hundido) 100%
+        );
+        background-size: 200% 100%;
+        animation: brillo 1.4s linear infinite;
+      }
+      @keyframes brillo {
+        from {
+          background-position: 200% 0;
+        }
+        to {
+          background-position: -200% 0;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .esqueleto {
+          animation: none;
+        }
+      }
+      .aviso {
+        border-left: 0;
+        border: 1px solid
+          color-mix(in oklab, var(--lente-ambar) 55%, transparent);
+        background: color-mix(in oklab, var(--lente-ambar) 10%, var(--placa));
+        border-radius: var(--r-m);
+        padding: 12px 14px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        font-size: 14px;
+      }
+      .aviso svg {
+        width: 18px;
+        height: 18px;
+        flex: none;
+        color: var(--texto-ambar);
+        margin-top: 1px;
+      }
+      .aviso.error {
+        border-color: color-mix(in oklab, var(--lente-rojo) 55%, transparent);
+        background: color-mix(in oklab, var(--lente-rojo) 8%, var(--placa));
+      }
+      .aviso.error svg {
+        color: var(--texto-rojo);
+      }
+
+      /* ===== Detalle ===== */
+      .detalle-cabeza {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 20px;
+        align-items: center;
+        padding: 24px;
+      }
+      .detalle-cabeza .senal {
+        width: 34px;
+        border-radius: 17px;
+        padding: 6px;
+        gap: 6px;
+      }
+      .detalle-cabeza .lente {
+        width: 22px;
+        height: 22px;
+      }
+      .detalle-cabeza h1 {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 40px;
+        text-transform: uppercase;
+        line-height: 1;
+      }
+      .detalle-cabeza .veredicto {
+        font-size: 18px;
+        margin-top: 6px;
+      }
+      .motivos {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 0;
+        display: grid;
+        gap: 6px;
+      }
+      .motivos li {
+        display: flex;
+        gap: 8px;
+        font-size: 14px;
+        align-items: flex-start;
+      }
+      .motivos li svg {
+        width: 16px;
+        height: 16px;
+        flex: none;
+        margin-top: 2px;
+      }
+      .motivos .rojo svg {
+        color: var(--texto-rojo);
+      }
+      .motivos .amarillo svg {
+        color: var(--texto-ambar);
+      }
+      .rejilla {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 16px;
+        margin-top: 16px;
+        align-items: start;
+      }
+      .panel {
+        padding: 18px 20px;
+      }
+      .panel h2 {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--via-2);
+        margin-bottom: 12px;
+      }
+      .cifras {
+        display: flex;
+        gap: 28px;
+        flex-wrap: wrap;
+      }
+      .cifra dt {
+        font-size: 12px;
+        color: var(--tenue);
+      }
+      .cifra dd {
+        margin: 2px 0 0;
+        font: 500 26px var(--mono);
+        letter-spacing: -0.02em;
+      }
+      .cifra dd small {
+        font-size: 13px;
+        color: var(--tenue);
+        letter-spacing: 0;
+      }
+      .cifra.mal dd {
+        color: var(--texto-ambar);
+      }
+      .filas {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .filas li {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 9px 0;
+        border-top: 1px solid var(--riel);
+        font-size: 14px;
+      }
+      .filas li:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .filas .der {
+        color: var(--via-2);
+        text-align: right;
+      }
+      .nota {
+        font-size: 12px;
+        color: var(--tenue);
+        margin-top: 10px;
+      }
+      .linea-tiempo {
+        list-style: none;
+        margin: 0;
+        padding: 0 0 0 16px;
+        border-left: 2px solid var(--riel-fuerte);
+        display: grid;
+        gap: 14px;
+      }
+      .linea-tiempo li {
+        position: relative;
+        font-size: 14px;
+      }
+      .linea-tiempo li::before {
+        content: "";
+        position: absolute;
+        left: -22px;
+        top: 6px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--placa);
+        border: 2px solid var(--via);
+      }
+      .linea-tiempo li.abre::before {
+        border-color: var(--lente-rojo);
+        background: var(--lente-rojo);
+      }
+      .linea-tiempo .cuando {
+        font: 400 12px var(--mono);
+        color: var(--tenue);
+        display: block;
+      }
+      .checklist {
+        list-style: none;
+        margin: 0 0 14px;
+        padding: 0;
+        display: grid;
+        gap: 4px;
+      }
+      .checklist label {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        min-height: 40px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .checklist input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--via);
+      }
+
+      /* ===== Página pública ===== */
+      .publica {
+        max-width: 640px;
+        margin: 0 auto;
+      }
+      .publica .cuadro {
+        padding: 28px;
+        display: grid;
+        gap: 22px;
+      }
+      .publica-estado {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+      }
+      .publica-estado .senal {
+        width: 30px;
+        border-radius: 15px;
+        padding: 5px;
+        gap: 5px;
+      }
+      .publica-estado .lente {
+        width: 20px;
+        height: 20px;
+      }
+      .publica h1 {
+        font-family: var(--display);
+        font-size: 34px;
+        text-transform: uppercase;
+        line-height: 1;
+      }
+
+      @media (max-width: 760px) {
+        .via-fila {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+        .rejilla {
+          grid-template-columns: 1fr;
+        }
+        .detalle-cabeza {
+          padding: 18px;
+        }
+        .detalle-cabeza h1 {
+          font-size: 32px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol
+        id="i-ok"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="m8.5 12 2.5 2.5 4.5-5" />
+      </symbol>
+      <symbol
+        id="i-precaucion"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M10.3 3.9 2.4 17.6A2 2 0 0 0 4.1 20.6h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"
+        />
+        <path d="M12 9v4" />
+        <path d="M12 17h.01" />
+      </symbol>
+      <symbol
+        id="i-alto"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M7.9 2h8.2L22 7.9v8.2L16.1 22H7.9L2 16.1V7.9z" />
+        <path d="M8 12h8" />
+      </symbol>
+    </svg>
+
+    <header class="placa-estacion">
+      <div class="dentro">
+        <a class="marca" href="#tablero" aria-label="Semáforo, inicio">
+          <svg viewBox="0 0 14 30" aria-hidden="true">
+            <rect width="14" height="30" rx="7" fill="#1c1f1e" />
+            <circle cx="7" cy="7" r="3.5" fill="#c8322b" />
+            <circle cx="7" cy="15" r="3.5" fill="#e0a100" opacity=".35" />
+            <circle cx="7" cy="23" r="3.5" fill="#0e8a3a" />
+          </svg>
+          Semáforo
+        </a>
+        <p class="monitor-estado">
+          <span class="punto" aria-hidden="true"></span> Monitor al día · último
+          check hace 6 min
+        </p>
+        <button class="boton" type="button">Salir</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- ========== Pantalla 1: tablero ========== -->
+      <section class="pantalla" id="tablero" aria-labelledby="t-tablero">
+        <p class="rotulo-pantalla">
+          Pantalla 1 · Tablero (casos 3, 5 y 7) · datos de ejemplo
+        </p>
+        <div class="titular">
+          <h1 id="t-tablero">¿Se puede liberar?</h1>
+          <p class="recuento">
+            <span
+              ><svg
+                width="16"
+                height="16"
+                style="color: var(--texto-verde)"
+                aria-hidden="true"
+              >
+                <use href="#i-ok" />
+              </svg>
+              1 en verde</span
+            >
+            <span
+              ><svg
+                width="16"
+                height="16"
+                style="color: var(--texto-ambar)"
+                aria-hidden="true"
+              >
+                <use href="#i-precaucion" />
+              </svg>
+              1 en precaución</span
+            >
+            <span
+              ><svg
+                width="16"
+                height="16"
+                style="color: var(--texto-rojo)"
+                aria-hidden="true"
+              >
+                <use href="#i-alto" />
+              </svg>
+              1 en alto</span
+            >
+          </p>
+        </div>
+
+        <div class="cuadro">
+          <ul class="vias" id="vias"></ul>
+        </div>
+      </section>
+
+      <!-- ========== Estados del tablero ========== -->
+      <section class="pantalla" aria-labelledby="t-estados">
+        <p class="rotulo-pantalla">
+          Estados del tablero · carga, vacío, error y monitor detenido (caso 9)
+        </p>
+        <h2 id="t-estados" class="sr">Estados del tablero</h2>
+        <div class="estados">
+          <div class="cuadro estado" aria-busy="true">
+            <h3>Cargando</h3>
+            <div class="esqueleto" style="width: 40%"></div>
+            <div class="esqueleto"></div>
+            <div class="esqueleto" style="width: 70%"></div>
+          </div>
+          <div class="cuadro estado">
+            <h3>Sin productos</h3>
+            <p>
+              Todavía no vigilas ningún producto. Registra su URL de salud y su
+              repositorio para empezar.
+            </p>
+            <p>
+              <button class="boton primario" type="button">
+                Registrar producto
+              </button>
+            </p>
+          </div>
+          <div class="aviso error" role="alert">
+            <svg aria-hidden="true"><use href="#i-alto" /></svg>
+            <p>
+              <strong>No se pudo leer el estado.</strong> La base de datos no
+              respondió. Lo que ves puede estar desactualizado.
+              <a href="#tablero">Reintentar</a>
+            </p>
+          </div>
+          <div class="aviso" role="status">
+            <svg aria-hidden="true"><use href="#i-precaucion" /></svg>
+            <p>
+              <strong>El monitor no ha corrido en 52 min.</strong> GitHub
+              Actions pudo retrasarse o desactivarse; mientras tanto ningún
+              producto puede quedar en verde.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== Pantalla 2: detalle ========== -->
+      <section class="pantalla" id="detalle" aria-labelledby="t-detalle">
+        <p class="rotulo-pantalla">
+          Pantalla 2 · Detalle del producto (casos 3 a 7) · datos de ejemplo
+        </p>
+        <div class="cuadro detalle-cabeza">
+          <div class="senal" data-color="amarillo" aria-hidden="true">
+            <span class="lente r"></span><span class="lente a"></span
+            ><span class="lente v"></span>
+          </div>
+          <div>
+            <h1 id="t-detalle">Tienda demo</h1>
+            <p class="veredicto amarillo">
+              <svg aria-hidden="true"><use href="#i-precaucion" /></svg>
+              Amarillo · precaución: revisar antes de liberar
+            </p>
+            <ul class="motivos">
+              <li class="amarillo">
+                <svg aria-hidden="true"><use href="#i-precaucion" /></svg> La
+                checklist de v2.3.0 está incompleta (2 de 4).
+              </li>
+              <li class="amarillo">
+                <svg aria-hidden="true"><use href="#i-precaucion" /></svg> La
+                latencia p95 es de 1,240 ms (máximo 900 ms).
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="rejilla">
+          <div class="cuadro panel">
+            <h2>Vía de las últimas 24 horas</h2>
+            <div
+              class="tramo"
+              id="tramo-detalle"
+              role="img"
+              aria-label="24 horas: 21 sin fallos, 3 con latencia alta"
+            ></div>
+            <div class="leyenda-tramo">
+              <span>hace 24 h</span><span>ahora</span>
+            </div>
+            <dl class="cifras" style="margin-top: 18px">
+              <div class="cifra">
+                <dt>Disponibilidad 24 h</dt>
+                <dd>100.0<small> %</small></dd>
+              </div>
+              <div class="cifra">
+                <dt>Disponibilidad 7 días</dt>
+                <dd>99.8<small> %</small></dd>
+              </div>
+              <div class="cifra mal">
+                <dt>p95 (máx. 900 ms)</dt>
+                <dd>1,240<small> ms</small></dd>
+              </div>
+            </dl>
+          </div>
+          <div class="cuadro panel">
+            <h2>Repositorio en GitHub</h2>
+            <ul class="filas">
+              <li>
+                <span>CI de main</span
+                ><span class="der veredicto verde" style="font-size: 14px"
+                  ><svg aria-hidden="true"><use href="#i-ok" /></svg> Pasa</span
+                >
+              </li>
+              <li>
+                <span>Último release</span
+                ><span class="der num">v2.2.4 · 11 nov</span>
+              </li>
+              <li><span>PRs abiertos</span><span class="der num">3</span></li>
+            </ul>
+            <p class="nota">
+              Datos de GitHub de hace 3 min (se actualizan cada 5 min).
+            </p>
+          </div>
+          <div class="cuadro panel">
+            <h2>Incidentes</h2>
+            <ol class="linea-tiempo">
+              <li class="abre">
+                <span class="cuando">14 nov · 03:07</span>Se abrió: /api/salud
+                respondió 503 tres veces seguidas.
+              </li>
+              <li>
+                <span class="cuando">14 nov · 03:52</span>Se cerró tras dos
+                revisiones correctas (45 min).
+              </li>
+            </ol>
+          </div>
+          <div class="cuadro panel">
+            <h2>Checklist de la versión v2.3.0</h2>
+            <ul class="checklist">
+              <li>
+                <label
+                  ><input type="checkbox" checked /> Migraciones
+                  revisadas</label
+                >
+              </li>
+              <li>
+                <label
+                  ><input type="checkbox" checked /> Notas de la versión
+                  escritas</label
+                >
+              </li>
+              <li>
+                <label
+                  ><input type="checkbox" /> Probado en la vista previa</label
+                >
+              </li>
+              <li>
+                <label><input type="checkbox" /> Plan para volver atrás</label>
+              </li>
+            </ul>
+            <button class="boton primario" type="button">Aprobar v2.3.0</button>
+            <p class="nota">
+              Se guarda quién aprobó, cuándo y el color en ese momento. Con rojo
+              no se puede aprobar.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== Pantalla 3: página pública ========== -->
+      <section
+        class="pantalla publica"
+        id="publica"
+        aria-labelledby="t-publica"
+      >
+        <p class="rotulo-pantalla">
+          Pantalla 3 · /status/hito (caso 8) · pública, sin datos internos
+        </p>
+        <div class="cuadro">
+          <div class="publica-estado">
+            <div class="senal" data-color="verde" aria-hidden="true">
+              <span class="lente r"></span><span class="lente a"></span
+              ><span class="lente v"></span>
+            </div>
+            <div>
+              <h1 id="t-publica">Hito</h1>
+              <p class="veredicto verde">
+                <svg aria-hidden="true"><use href="#i-ok" /></svg> Funcionando
+                con normalidad
+              </p>
+            </div>
+          </div>
+          <div>
+            <div
+              class="tramo"
+              id="tramo-publico"
+              role="img"
+              aria-label="24 horas sin fallos"
+            ></div>
+            <div class="leyenda-tramo">
+              <span>hace 24 h</span><span>ahora</span>
+            </div>
+          </div>
+          <dl class="cifras">
+            <div class="cifra">
+              <dt>Disponibilidad 24 h</dt>
+              <dd>100.0<small> %</small></dd>
+            </div>
+            <div class="cifra">
+              <dt>Disponibilidad 7 días</dt>
+              <dd>99.9<small> %</small></dd>
+            </div>
+          </dl>
+          <p class="motivo">
+            Sin incidentes en los últimos 7 días. Revisado cada 15 minutos.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // Solo del prototipo: arma las vías con datos de ejemplo.
+      const vias = [
+        {
+          nombre: "Hito",
+          repo: "MaxAcosta-30/hito",
+          color: "verde",
+          veredicto: "Verde · vía libre",
+          motivo: "Sin observaciones",
+          disp: "100.0 %",
+          bloques: Array(24).fill("ok"),
+        },
+        {
+          nombre: "Tienda demo",
+          repo: "ejemplo/tienda",
+          color: "amarillo",
+          veredicto: "Amarillo · precaución",
+          motivo: "Checklist incompleta y p95 alto",
+          disp: "100.0 %",
+          bloques: [
+            ...Array(18).fill("ok"),
+            "lento",
+            "ok",
+            "lento",
+            "lento",
+            "ok",
+            "ok",
+          ],
+        },
+        {
+          nombre: "API de ejemplo",
+          repo: "ejemplo/api",
+          color: "rojo",
+          veredicto: "Rojo · alto",
+          motivo: "Incidente abierto: /salud responde 500",
+          disp: "96.9 %",
+          bloques: [
+            ...Array(5).fill("sin-datos"),
+            ...Array(16).fill("ok"),
+            "falla",
+            "falla",
+            "falla",
+          ],
+        },
+      ];
+      const icono = { verde: "i-ok", amarillo: "i-precaucion", rojo: "i-alto" };
+      const nombreBloque = {
+        ok: "sin fallos",
+        lento: "latencia alta",
+        falla: "con fallos",
+        "sin-datos": "sin datos",
+      };
+      const tramo = (bloques) =>
+        bloques
+          .map(
+            (b, i) =>
+              `<span class="bloque ${b === "ok" ? "" : b}" title="hace ${24 - i} h: ${nombreBloque[b]}"></span>`,
+          )
+          .join("");
+      const resumen = (bloques) =>
+        Object.entries(
+          bloques.reduce((a, b) => ((a[b] = (a[b] || 0) + 1), a), {}),
+        )
+          .map(([k, n]) => `${n} ${nombreBloque[k]}`)
+          .join(", ");
+      document.getElementById("vias").innerHTML = vias
+        .map(
+          (v) => `
+    <li class="via-fila">
+      <div><h2><a href="#detalle">${v.nombre}</a></h2><p class="repo">${v.repo}</p></div>
+      <div><div class="tramo" role="img" aria-label="Últimas 24 horas: ${resumen(v.bloques)}">${tramo(v.bloques)}</div><div class="leyenda-tramo"><span>hace 24 h</span><span class="disponibilidad">${v.disp} en 24 h</span></div></div>
+      <div class="senal-y-motivo">
+        <div class="senal" data-color="${v.color}" aria-hidden="true"><span class="lente r"></span><span class="lente a"></span><span class="lente v"></span></div>
+        <div><p class="veredicto ${v.color}"><svg aria-hidden="true"><use href="#${icono[v.color]}"/></svg> ${v.veredicto}</p><p class="motivo">${v.motivo}</p></div>
+      </div>
+    </li>`,
+        )
+        .join("");
+      document.getElementById("tramo-detalle").innerHTML = tramo(
+        vias[1].bloques,
+      );
+      document.getElementById("tramo-publico").innerHTML = tramo(
+        vias[0].bloques,
+      );
+    </script>
+  </body>
+</html>
