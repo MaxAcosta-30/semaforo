@@ -11,3 +11,9 @@
 1. ¿Por qué el monitor vuelve a validar la URL en cada corrida si ya se validó al registrarla?
 2. ¿Cómo se evita el _DNS rebinding_ en `peticionHttps` y por qué se verifica el certificado contra el nombre y no contra la IP?
 3. Dos corridas del monitor se cruzan y las dos quieren abrir un incidente para el mismo endpoint. ¿Qué lo impide?
+
+## GitHub (caso 4)
+
+1. ¿Cómo funciona una petición condicional con ETag y en qué caso un `304` no gasta límite?
+2. ¿Por qué el CI se filtra por `event=push`?
+3. GitHub dice que quedan 3 peticiones. ¿Qué hace Semáforo y qué ve el usuario?

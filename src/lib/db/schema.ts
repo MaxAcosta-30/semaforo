@@ -4,7 +4,10 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgEnum,
+  primaryKey,
+  smallint,
   pgTable,
   text,
   timestamp,
@@ -109,4 +112,26 @@ export const monitorRuns = pgTable("monitor_runs", {
   finishedAt: timestamp("finished_at", { withTimezone: true }).notNull(),
   checked: integer("checked").notNull(),
   failed: integer("failed").notNull(),
+}).enableRLS();
+
+// Caso 4: última respuesta de la API de GitHub por repositorio y recurso, con su ETag
+// para pedir solo si cambió (un 304 autenticado no gasta límite).
+export const githubSnapshots = pgTable(
+  "github_snapshots",
+  {
+    repo: text("repo").notNull(),
+    recurso: text("recurso").notNull(), // "ci" | "release" | "prs"
+    etag: text("etag"),
+    datos: jsonb("datos"),
+    consultadoAt: timestamp("consultado_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.repo, t.recurso] })],
+).enableRLS();
+
+// Caso 4: lo que GitHub dijo del límite en la última respuesta (una sola fila).
+export const githubRateLimit = pgTable("github_rate_limit", {
+  id: smallint("id").primaryKey().default(1),
+  remaining: integer("remaining").notNull(),
+  resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 }).enableRLS();
