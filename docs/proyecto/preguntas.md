@@ -17,3 +17,9 @@
 1. ¿Cómo funciona una petición condicional con ETag y en qué caso un `304` no gasta límite?
 2. ¿Por qué el CI se filtra por `event=push`?
 3. GitHub dice que quedan 3 peticiones. ¿Qué hace Semáforo y qué ve el usuario?
+
+## Sesión (casos 1 y 9)
+
+1. Un lector manda un `POST /api/productos` con curl. ¿Qué lo detiene y dónde?
+2. ¿Por qué el límite de la demo vive en PostgreSQL y no en una variable en memoria?
+3. ¿Qué pasa si alguien con cuenta de GitHub que no está en `members` intenta entrar?

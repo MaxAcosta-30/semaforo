@@ -135,3 +135,11 @@ export const githubRateLimit = pgTable("github_rate_limit", {
   resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 }).enableRLS();
+
+// Límite de intentos por clave (por ejemplo "demo:<ip>"). En serverless cada instancia tiene
+// su propia memoria, así que el conteo vive en PostgreSQL.
+export const rateLimits = pgTable("rate_limits", {
+  clave: text("clave").primaryKey(),
+  inicio: timestamp("inicio", { withTimezone: true }).notNull(),
+  conteo: integer("conteo").notNull(),
+}).enableRLS();
