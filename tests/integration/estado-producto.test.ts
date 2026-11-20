@@ -34,17 +34,15 @@ async function historia(
   fallo: (i: number) => boolean = () => false,
   latencia = 200,
 ) {
-  await db
-    .insert(checks)
-    .values(
-      Array.from({ length: 96 }, (_, i) => ({
-        endpointId,
-        checkedAt: haceMin(i * 15 + 1),
-        ok: !fallo(i),
-        status: fallo(i) ? 500 : 200,
-        latencyMs: latencia,
-      })),
-    );
+  await db.insert(checks).values(
+    Array.from({ length: 96 }, (_, i) => ({
+      endpointId,
+      checkedAt: haceMin(i * 15 + 1),
+      ok: !fallo(i),
+      status: fallo(i) ? 500 : 200,
+      latencyMs: latencia,
+    })),
+  );
 }
 
 describe("estadoDeProducto", () => {
@@ -93,13 +91,11 @@ describe("estadoDeProducto", () => {
   it("un incidente abierto pone la página pública en incidente", async () => {
     const { p, e } = await producto();
     await historia(e.id);
-    await db
-      .insert(incidents)
-      .values({
-        endpointId: e.id,
-        openedAt: haceMin(30),
-        reason: "Respondió 503",
-      });
+    await db.insert(incidents).values({
+      endpointId: e.id,
+      openedAt: haceMin(30),
+      reason: "Respondió 503",
+    });
     const r = await estadoDeProducto(db, p.slug, {
       ahora: AHORA,
       ci: async () => "exito",
