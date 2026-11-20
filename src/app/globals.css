@@ -1,15 +1,76 @@
-/* Base mínima. Los tokens de diseño se definen en la Etapa 2. */
+/* Tokens de la dirección "Enclavamiento" (docs/proyecto/07-diseno.md). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  color-scheme: light dark;
+  color-scheme: light;
+  --esmalte: #efede4; /* fondo del cuadro */
+  --placa: #f8f7f1; /* superficies */
+  --hundido: #e5e2d6; /* campos y zonas hundidas */
+  --via: #1c1f1e; /* tinta principal y la vía dibujada */
+  --via-2: #474b48; /* texto secundario */
+  --tenue: #63675f; /* metadatos (≥ 4.5:1 sobre placa) */
+  --riel: rgba(28, 31, 30, 0.14);
+  --riel-fuerte: rgba(28, 31, 30, 0.28);
+  --laton: #7d6228; /* foco y enlaces: el latón de las placas */
+  --lente-verde: #0e8a3a;
+  --texto-verde: #0b6b2e;
+  --lente-ambar: #e0a100;
+  --texto-ambar: #6e4d00;
+  --lente-rojo: #c8322b;
+  --texto-rojo: #a12620;
+  --lente-apagada: #3a3e3b;
+  --caja: #1c1f1e; /* la caja de la señal: siempre oscura */
+  --aro-caja: transparent;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --sans: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --r-s: 4px;
+  --r-m: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --esmalte: #111312;
+    --placa: #191c1a;
+    --hundido: #0c0e0d;
+    --via: #eceae1;
+    --via-2: #bdbaaf;
+    --tenue: #95928a;
+    --riel: rgba(236, 234, 225, 0.11);
+    --riel-fuerte: rgba(236, 234, 225, 0.24);
+    --laton: #d2ad5c;
+    --lente-verde: #22b455;
+    --texto-verde: #5fd58a;
+    --lente-ambar: #f2b630;
+    --texto-ambar: #f2b630;
+    --lente-rojo: #e5544b;
+    --texto-rojo: #f27a72;
+    --lente-apagada: #3a3f3c;
+    --aro-caja: rgba(236, 234, 225, 0.22);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --esmalte: #111312;
+  --placa: #191c1a;
+  --hundido: #0c0e0d;
+  --via: #eceae1;
+  --via-2: #bdbaaf;
+  --tenue: #95928a;
+  --riel: rgba(236, 234, 225, 0.11);
+  --riel-fuerte: rgba(236, 234, 225, 0.24);
+  --laton: #d2ad5c;
+  --lente-verde: #22b455;
+  --texto-verde: #5fd58a;
+  --lente-ambar: #f2b630;
+  --texto-ambar: #f2b630;
+  --lente-rojo: #e5544b;
+  --texto-rojo: #f27a72;
+  --lente-apagada: #3a3f3c;
+  --aro-caja: rgba(236, 234, 225, 0.22);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: var(--esmalte);
+  --foreground: var(--via);
 }
 
 *,
