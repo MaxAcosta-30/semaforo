@@ -1,0 +1,35 @@
+.senal {
+  flex: none;
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+  width: 22px;
+  border-radius: 11px;
+  background: var(--caja);
+  box-shadow: 0 0 0 1px var(--aro-caja);
+}
+.grande {
+  width: 34px;
+  border-radius: 17px;
+  padding: 6px;
+  gap: 6px;
+}
+.lente {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--lente-apagada);
+}
+.grande .lente {
+  width: 22px;
+  height: 22px;
+}
+.rojo .r {
+  background: var(--lente-rojo);
+}
+.amarillo .a {
+  background: var(--lente-ambar);
+}
+.verde .v {
+  background: var(--lente-verde);
+}
