@@ -19,9 +19,9 @@
   --lente-apagada: #3a3e3b;
   --caja: #1c1f1e; /* la caja de la señal: siempre oscura */
   --aro-caja: transparent;
-  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
-  --sans: "IBM Plex Sans", system-ui, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --display: var(--fuente-display), "Arial Narrow", sans-serif;
+  --sans: var(--fuente-sans), system-ui, sans-serif;
+  --mono: var(--fuente-mono), ui-monospace, monospace;
   --r-s: 4px;
   --r-m: 8px;
 }
@@ -84,5 +84,6 @@ body {
   min-height: 100dvh;
   color: var(--foreground);
   background: var(--background);
-  font-family: system-ui, sans-serif;
+  font: 15px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
 }
