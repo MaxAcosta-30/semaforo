@@ -26,4 +26,5 @@ software-maestro*.md
 .claude/settings.local.json
 
 # caché local de herramientas de diseño
-.impeccable/
+.impeccable/hook.cache.json
+.impeccable/config.local.json
