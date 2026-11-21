@@ -67,6 +67,14 @@ describe("POST /api/productos (caso 2)", () => {
       "slug",
     ]);
   });
+
+  it("el slug «nuevo» está reservado (400 en slug)", async () => {
+    sesionActual.valor = { rol: "admin", demo: false };
+    const r = await post({ ...valido, slug: "nuevo" });
+    expect(r.status).toBe(400);
+    expect(Object.keys((await r.json()).errores)).toEqual(["slug"]);
+    expect(await db.select().from(products)).toHaveLength(0);
+  });
 });
 
 describe("registrarProducto", () => {

@@ -11,13 +11,13 @@ import { and, eq } from "drizzle-orm";
 import type { getDb } from "@/lib/db/client";
 import { githubRateLimit, githubSnapshots } from "@/lib/db/schema";
 import type { EstadoCi } from "@/lib/domain/semaforo";
+import { repoValido } from "@/lib/productos/esquema";
 
 type Db = ReturnType<typeof getDb>;
 
 export const API = "https://api.github.com";
 export const FRESCURA_MS = 5 * 60_000;
 export const RESERVA = 5;
-const REPO_VALIDO = /^[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}$/;
 
 export interface Ci {
   estado: EstadoCi;
@@ -50,9 +50,7 @@ interface Opciones {
   ahora?: () => Date;
 }
 
-export function repoValido(repo: string): boolean {
-  return REPO_VALIDO.test(repo) && !repo.includes("..");
-}
+export { repoValido };
 
 export async function estadoRepositorio(
   db: Db,

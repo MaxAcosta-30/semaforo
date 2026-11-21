@@ -35,3 +35,20 @@ test("la página pública muestra solo productos públicos", async ({ page }) =>
   await page.goto("/status/api-ejemplo"); // privado
   await expect(page.getByText("API de ejemplo")).toHaveCount(0);
 });
+
+test("la demo no ve el formulario de registro", async ({ page }) => {
+  await page.goto("/entrar");
+  await page.getByRole("button", { name: "Entrar como demo" }).click();
+  await expect(
+    page.getByRole("heading", { name: "¿Se puede liberar?" }),
+  ).toBeVisible();
+
+  await page.goto("/productos/nuevo");
+  await expect(
+    page.getByText("Solo el administrador puede registrar productos."),
+  ).toBeVisible();
+  await expect(page.getByLabel("Nombre")).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Volver al tablero" }),
+  ).toBeVisible();
+});
