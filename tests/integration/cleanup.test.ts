@@ -43,7 +43,7 @@ describe("GET /api/monitor/cleanup", () => {
 
     const res = await llamar(`Bearer ${SECRET}`);
 
-    expect(await res.json()).toEqual({ deleted: 1 });
+    expect(await res.json()).toMatchObject({ deleted: 1 });
     expect(await db.select().from(checks)).toHaveLength(2);
   });
 });

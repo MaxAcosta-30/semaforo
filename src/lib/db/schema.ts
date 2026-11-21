@@ -130,6 +130,15 @@ export const githubSnapshots = pgTable(
   (t) => [primaryKey({ columns: [t.repo, t.recurso] })],
 ).enableRLS();
 
+// Webhooks de GitHub: entregas ya procesadas (X-GitHub-Delivery) para no repetirlas.
+export const githubDeliveries = pgTable("github_deliveries", {
+  deliveryId: text("delivery_id").primaryKey(),
+  event: text("event"),
+  receivedAt: timestamp("received_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}).enableRLS();
+
 // Caso 4: lo que GitHub dijo del límite en la última respuesta (una sola fila).
 export const githubRateLimit = pgTable("github_rate_limit", {
   id: smallint("id").primaryKey().default(1),

@@ -104,5 +104,5 @@ Estado según `docs/proyecto/0*-*.md`, el código y `gh pr list --state all` (20
 ## Debería
 
 - **Alertas de incidentes a Discord:** en construcción en la rama `etapa-4/alertas-discord` (ver `11-alertas-discord.md`); el envío real: NO VERIFICADO.
-- **Webhooks de GitHub con firma HMAC:** pendiente.
+- **Webhooks de GitHub con firma HMAC:** hecho en la rama `etapa-5/webhooks-github` (`POST /api/github/webhook`, ver `13-webhooks-github.md`); probado en local con firmas simuladas, la configuración real en GitHub: NO VERIFICADO.
 - **OpenAPI del endpoint público de estado:** hecho en la rama `etapa-5/openapi-y-demo` (`public/openapi.json`, `GET /api/status/[slug]`, ver `12-api-publica-y-demo.md`); probado en local, en producción: NO VERIFICADO.
