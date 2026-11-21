@@ -56,6 +56,7 @@ describe("estadoDeProducto", () => {
     const r = await estadoDeProducto(db, p.slug, {
       ahora: AHORA,
       ci: async () => "exito",
+      checklistCompleta: true,
     });
 
     expect(r?.semaforo).toEqual({ color: "verde", motivos: [] });
@@ -81,7 +82,10 @@ describe("estadoDeProducto", () => {
   it("sin CI conocido nunca es verde", async () => {
     const { p, e } = await producto();
     await historia(e.id);
-    const r = await estadoDeProducto(db, p.slug, { ahora: AHORA });
+    const r = await estadoDeProducto(db, p.slug, {
+      ahora: AHORA,
+      checklistCompleta: true,
+    });
     expect(r?.semaforo.color).toBe("amarillo");
     expect(r?.semaforo.motivos[0]?.regla).toBe("datos_insuficientes");
   });

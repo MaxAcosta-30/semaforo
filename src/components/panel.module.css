@@ -52,13 +52,20 @@
   text-decoration: none;
   transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
 }
-.boton:active {
+.boton:not(:disabled):active {
   transform: scale(0.97);
 }
 .primario {
   background: var(--via);
   color: var(--placa);
   border-color: var(--via);
+}
+/* Deshabilitado: hundido como un campo, para que no parezca que se puede pulsar. */
+.boton:disabled {
+  background: var(--hundido);
+  color: var(--tenue);
+  border-color: var(--riel);
+  cursor: not-allowed;
 }
 .main {
   max-width: 1120px;
@@ -240,6 +247,7 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  align-items: center;
   padding: 9px 0;
   border-top: 1px solid var(--riel);
   font-size: 14px;

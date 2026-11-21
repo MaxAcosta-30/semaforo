@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import estilos from "./panel.module.css";
 
 interface Props {
@@ -25,9 +25,18 @@ export function PanelChecklist({
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // La casilla cambia al instante; si el servidor lo rechaza, vuelve sola al terminar la transición.
+  const [marcas, marcarOptimista] = useOptimistic(
+    renglones,
+    (actual, cambio: { texto: string; marcado: boolean }) =>
+      actual.map((r) =>
+        r.texto === cambio.texto ? { ...r, marcado: cambio.marcado } : r,
+      ),
+  );
 
-  const enviar = (url: string, init: RequestInit) =>
+  const enviar = (url: string, init: RequestInit, antes?: () => void) =>
     iniciar(async () => {
+      antes?.();
       setError(null);
       const r = await fetch(url, {
         ...init,
@@ -52,14 +61,14 @@ export function PanelChecklist({
   return (
     <div>
       <ul className={estilos.datos}>
-        {renglones.map((r) => (
+        {marcas.map((r) => (
           <li key={r.texto}>
             <label
               style={{
                 display: "flex",
                 gap: 10,
                 alignItems: "center",
-                minHeight: 40,
+                minHeight: 44,
                 cursor: puedeEscribir ? "pointer" : "default",
               }}
             >
@@ -67,15 +76,17 @@ export function PanelChecklist({
                 type="checkbox"
                 checked={r.marcado}
                 disabled={!puedeEscribir || pendiente}
-                onChange={(e) =>
-                  enviar(`/api/productos/${slug}/checklist`, {
-                    method: "POST",
-                    body: JSON.stringify({
-                      item: r.texto,
-                      marcado: e.target.checked,
-                    }),
-                  })
-                }
+                onChange={(e) => {
+                  const marcado = e.target.checked;
+                  enviar(
+                    `/api/productos/${slug}/checklist`,
+                    {
+                      method: "POST",
+                      body: JSON.stringify({ item: r.texto, marcado }),
+                    },
+                    () => marcarOptimista({ texto: r.texto, marcado }),
+                  );
+                }}
                 style={{ width: 18, height: 18, accentColor: "var(--via)" }}
               />
               {r.texto}
