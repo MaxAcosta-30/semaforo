@@ -84,7 +84,7 @@ Lo que hay en el código:
 - **Límites de intentos** (`src/lib/limites.ts`, en PostgreSQL): "Entrar como demo" 10 por minuto por IP y `GET /api/status/[slug]` 60 por minuto por IP.
 - **Base de datos:** RLS activado en todas las tablas (ADR 0002, `tests/integration/rls.test.ts`).
 - **Secretos:** solo en `.env` local (ignorado por git), en variables de Vercel y en secretos de GitHub Actions. El repositorio no contiene ninguno.
-- **No hecho:** `next.config.ts` todavía no define CSP, `X-Content-Type-Options` ni `Referrer-Policy`, aunque `CLAUDE.md` los pide.
+- **Cabeceras:** CSP, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `X-Frame-Options: DENY` y `Permissions-Policy` en `next.config.ts`. La CSP admite scripts en línea porque el prerender parcial no permite nonce ([ADR 0004](docs/decisiones/0004-cabeceras-y-csp.md)); verificado en el navegador sin violaciones.
 
 ## Pruebas
 
@@ -143,5 +143,4 @@ Ver `.env.example`. Sin valores aquí.
 - **NO VERIFICADO: Discord y webhooks reales.** Probados con simulaciones (firmas de ejemplo, MSW), no contra Discord ni GitHub.
 - La línea de tiempo de incidentes y el aviso de 45 minutos no tienen prueba automatizada propia.
 - `/status/[slug]` de un producto privado muestra "no encontrado" con `noindex` pero responde HTTP 200 (streaming de Next).
-- Faltan las cabeceras de seguridad (ver Seguridad).
 - Fuera de alcance: intervalos menores a 15 min, varias regiones, equipos, despliegues automáticos desde Semáforo y app móvil.
