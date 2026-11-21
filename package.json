@@ -13,6 +13,7 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:demo": "node --import ./scripts/alias.mjs scripts/sembrar-demo.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

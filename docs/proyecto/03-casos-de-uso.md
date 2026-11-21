@@ -99,10 +99,10 @@ Estado según `docs/proyecto/0*-*.md`, el código y `gh pr list --state all` (20
 - **Errores y casos límite:** límite de 10 entradas por minuto por IP (PostgreSQL); la demo no puede escribir (403).
 - **Criterio de aceptación:** El botón "Entrar como demo" da acceso de lector; la demo vigila Hito y 2 productos de ejemplo; avisa si el monitor no ha corrido en 45 minutos.
 - **Pruebas:** `tests/e2e/demo.spec.ts`; `tests/unit/auth.test.ts` (la demo entra como lector); `tests/integration/productos-api.test.ts` (límite de intentos). El aviso de 45 minutos: sin prueba automatizada.
-- **Estado:** en construcción (PR #8): el acceso de lector y el límite están hechos; que la demo vigile Hito y 2 productos de ejemplo en producción: NO VERIFICADO.
+- **Estado:** en construcción (PR #8): el acceso de lector y el límite están hechos; la siembra de Hito y 2 productos de ejemplo (`pnpm db:demo`, ver `12-api-publica-y-demo.md`) es idempotente y probada en la base local; sembrarla en producción: NO VERIFICADO.
 
 ## Debería
 
 - **Alertas de incidentes a Discord:** en construcción en la rama `etapa-4/alertas-discord` (ver `11-alertas-discord.md`); el envío real: NO VERIFICADO.
 - **Webhooks de GitHub con firma HMAC:** pendiente.
-- **OpenAPI del endpoint público de estado:** pendiente.
+- **OpenAPI del endpoint público de estado:** hecho en la rama `etapa-5/openapi-y-demo` (`public/openapi.json`, `GET /api/status/[slug]`, ver `12-api-publica-y-demo.md`); probado en local, en producción: NO VERIFICADO.

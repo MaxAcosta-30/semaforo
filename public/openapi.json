@@ -1,0 +1,148 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Semáforo · API pública de estado",
+    "version": "1.0.0",
+    "description": "Estado público de un producto vigilado por Semáforo. Solo lectura, sin autenticación."
+  },
+  "paths": {
+    "/api/status/{slug}": {
+      "get": {
+        "operationId": "obtenerEstado",
+        "summary": "Estado público de un producto",
+        "description": "Solo productos marcados como públicos. Límite: 60 peticiones por minuto por IP.",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "description": "Identificador del producto (minúsculas, números y guiones).",
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "maxLength": 60
+            },
+            "example": "hito"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado actual del producto.",
+            "headers": {
+              "Cache-Control": {
+                "schema": { "type": "string" },
+                "example": "public, max-age=60, s-maxage=60"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Estado" },
+                "example": {
+                  "nombre": "Hito",
+                  "slug": "hito",
+                  "estado": "normal",
+                  "disponibilidad24h": 1,
+                  "disponibilidad7d": 0.998,
+                  "ultimoCheck": "2026-11-19T12:00:00.000Z",
+                  "incidentes": [
+                    {
+                      "abierto": "2026-11-17T08:15:00.000Z",
+                      "cerrado": "2026-11-17T08:45:00.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "El producto no existe o no es público (mismo cuerpo en ambos casos).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "example": { "error": "No encontrado" }
+              }
+            }
+          },
+          "429": {
+            "description": "Se excedió el límite de peticiones por IP.",
+            "headers": {
+              "Retry-After": {
+                "description": "Segundos que hay que esperar.",
+                "schema": { "type": "integer" },
+                "example": 60
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "example": { "error": "Demasiadas peticiones" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Estado": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "nombre",
+          "slug",
+          "estado",
+          "disponibilidad24h",
+          "disponibilidad7d",
+          "ultimoCheck",
+          "incidentes"
+        ],
+        "properties": {
+          "nombre": { "type": "string" },
+          "slug": { "type": "string" },
+          "estado": {
+            "type": "string",
+            "enum": ["normal", "degradado", "incidente", "sin-datos"],
+            "description": "normal; degradado = fallas intermitentes (disponibilidad 24 h menor al 99 %); incidente = incidente en curso; sin-datos."
+          },
+          "disponibilidad24h": {
+            "type": ["number", "null"],
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Fracción de 0 a 1; null sin datos."
+          },
+          "disponibilidad7d": {
+            "type": ["number", "null"],
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Fracción de 0 a 1; null sin datos."
+          },
+          "ultimoCheck": { "type": ["string", "null"], "format": "date-time" },
+          "incidentes": {
+            "type": "array",
+            "description": "Incidentes de los últimos 7 días, el más reciente primero.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["abierto", "cerrado"],
+              "properties": {
+                "abierto": { "type": "string", "format": "date-time" },
+                "cerrado": {
+                  "type": ["string", "null"],
+                  "format": "date-time",
+                  "description": "null si sigue en curso."
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["error"],
+        "properties": { "error": { "type": "string" } }
+      }
+    }
+  }
+}
