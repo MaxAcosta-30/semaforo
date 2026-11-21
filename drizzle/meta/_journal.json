@@ -43,6 +43,13 @@
       "when": 1795155081841,
       "tag": "0005_smiling_scarlet_spider",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795230981461,
+      "tag": "0006_daffy_jigsaw",
+      "breakpoints": true
     }
   ]
 }
