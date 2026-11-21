@@ -4,7 +4,14 @@
 import { lookup } from "node:dns/promises";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import type { getDb } from "@/lib/db/client";
-import { checks, endpoints, incidents, monitorRuns } from "@/lib/db/schema";
+import {
+  checks,
+  endpoints,
+  incidents,
+  monitorRuns,
+  products,
+} from "@/lib/db/schema";
+import { alertarApertura, alertarCierre } from "@/lib/alertas/discord";
 import { registrarCheck, type EstadoIncidente } from "@/lib/domain/incidentes";
 import { peticionHttps, type Peticion } from "./peticion";
 import { type Resolver, validarUrl } from "./ssrf";
@@ -44,7 +51,16 @@ export async function ejecutarMonitor(
     incidentesCerrados: 0,
   };
 
-  const lista = await db.select().from(endpoints);
+  const lista = await db
+    .select({
+      id: endpoints.id,
+      url: endpoints.url,
+      expectedStatus: endpoints.expectedStatus,
+      producto: products.name,
+      slug: products.slug,
+    })
+    .from(endpoints)
+    .innerJoin(products, eq(endpoints.productId, products.id));
   for (let i = 0; i < lista.length; i += CONCURRENCIA) {
     await Promise.all(
       lista.slice(i, i + CONCURRENCIA).map(async (ep) => {
@@ -61,9 +77,21 @@ export async function ejecutarMonitor(
         resumen.revisados++;
         if (!resultado.ok) resumen.fallidos++;
 
-        const evento = await actualizarIncidente(db, ep.id, resultado, cuando);
-        if (evento === "abrir") resumen.incidentesAbiertos++;
-        if (evento === "cerrar") resumen.incidentesCerrados++;
+        const cambio = await actualizarIncidente(db, ep.id, resultado, cuando);
+        if (cambio?.evento === "abrir") resumen.incidentesAbiertos++;
+        if (cambio?.evento === "cerrar") resumen.incidentesCerrados++;
+
+        // Después de confirmada la escritura; enviar nunca lanza (captura sus errores).
+        const datos = {
+          producto: ep.producto,
+          slug: ep.slug,
+          endpoint: ep.url,
+        };
+        if (cambio?.evento === "abrir") {
+          await alertarApertura(datos, cambio.causa);
+        } else if (cambio?.evento === "cerrar") {
+          await alertarCierre(datos, cambio.duracionMs);
+        }
       }),
     );
   }
@@ -108,7 +136,7 @@ async function actualizarIncidente(
   cuando: Date,
 ) {
   const [abierto] = await db
-    .select({ id: incidents.id })
+    .select({ id: incidents.id, openedAt: incidents.openedAt })
     .from(incidents)
     .where(
       and(eq(incidents.endpointId, endpointId), isNull(incidents.closedAt)),
@@ -132,21 +160,26 @@ async function actualizarIncidente(
   const { evento } = registrarCheck(estado, resultado.ok);
 
   if (evento === "abrir") {
-    await db
+    const causa = resultado.error ?? "Falló 3 veces seguidas";
+    const nuevos = await db
       .insert(incidents)
-      .values({
-        endpointId,
-        openedAt: cuando,
-        reason: resultado.error ?? "Falló 3 veces seguidas",
-      })
-      .onConflictDoNothing(); // ux_incidents_abierto: si otra corrida ya lo abrió, no se duplica
-  } else if (evento === "cerrar" && abierto) {
+      .values({ endpointId, openedAt: cuando, reason: causa })
+      .onConflictDoNothing() // ux_incidents_abierto: si otra corrida ya lo abrió, no se duplica
+      .returning({ id: incidents.id });
+    // Sin fila insertada otra corrida lo abrió: no se repite la alerta.
+    return nuevos.length > 0 ? { evento, causa } : null;
+  }
+  if (evento === "cerrar" && abierto) {
     await db
       .update(incidents)
       .set({ closedAt: cuando })
       .where(eq(incidents.id, abierto.id));
+    return {
+      evento,
+      duracionMs: cuando.getTime() - abierto.openedAt.getTime(),
+    };
   }
-  return evento;
+  return null;
 }
 
 function rachaInicial(lista: { ok: boolean }[], valor: boolean): number {
