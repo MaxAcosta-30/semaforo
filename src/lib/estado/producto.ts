@@ -2,6 +2,7 @@
 // reglas puras del semáforo. También arma la vía de 24 bloques del diseño "Enclavamiento".
 
 import { and, desc, eq, gte, inArray, isNull } from "drizzle-orm";
+import { checklistDe } from "@/lib/aprobaciones";
 import type { getDb } from "@/lib/db/client";
 import { checks, endpoints, incidents, products } from "@/lib/db/schema";
 import {
@@ -39,6 +40,7 @@ export interface EstadoProducto {
     slug: string;
     repo: string;
     publico: boolean;
+    version: string;
   };
   semaforo: ResultadoSemaforo;
   publico: EstadoPublico;
@@ -142,7 +144,9 @@ export async function estadoDeProducto(
     latenciaP95Ms: peor?.ms ?? null,
     latenciaMaximaMs: peor?.maximo ?? Number.POSITIVE_INFINITY,
     ultimoCheck,
-    checklistCompleta: fuentes.checklistCompleta ?? true,
+    checklistCompleta:
+      fuentes.checklistCompleta ??
+      (await checklistDe(db, p.id, p.versionCandidata)).completa,
   });
 
   const maximoDe = new Map(eps.map((e) => [e.id, e.maxLatencyMs]));
@@ -170,6 +174,7 @@ export async function estadoDeProducto(
       slug: p.slug,
       repo: p.repo,
       publico: p.isPublic,
+      version: p.versionCandidata,
     },
     semaforo,
     publico:

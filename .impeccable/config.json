@@ -1,0 +1,35 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "docs/diseno/prototipo.html"
+        ],
+        "createdAt": "2026-11-21T02:23:27.176Z",
+        "reason": "Es --esmalte, el esmalte de las placas ferroviarias del mundo Enclavamiento (07-diseno.md); el modo oscuro se diseñó aparte."
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "docs/diseno/prototipo.html"
+        ],
+        "createdAt": "2026-11-21T02:23:27.185Z",
+        "reason": "Falso positivo del análisis estático: renderizado, .filas li tiene 9 px y el primero no lleva borde (Playwright a 390 y 1440 px; detector sobre URL sin hallazgo)."
+      },
+      {
+        "rule": "repeating-stripes-gradient",
+        "value": "*",
+        "files": [
+          "docs/diseno/prototipo.html"
+        ],
+        "createdAt": "2026-11-21T02:23:27.193Z",
+        "reason": "Marca el bloque «sin datos» de la vía: un patrón para que ese estado no dependa solo del color. No es decoración de superficie."
+      }
+    ]
+  }
+}

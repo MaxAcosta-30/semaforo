@@ -1,12 +1,14 @@
 import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { PanelChecklist } from "@/components/PanelChecklist";
 import { Placa } from "@/components/Placa";
 import { Senal } from "@/components/Senal";
 import { Tramo } from "@/components/Tramo";
 import { Icono, Veredicto } from "@/components/Veredicto";
 import estilos from "@/components/panel.module.css";
-import { obtenerSesion } from "@/lib/auth/sesion";
+import { aprobacionesDe, checklistDe } from "@/lib/aprobaciones";
+import { obtenerSesion, puedeEscribir } from "@/lib/auth/sesion";
 import { getDb } from "@/lib/db/client";
 import { ciDesdeGitHub } from "@/lib/estado/fuentes";
 import { estadoDeProducto, porcentaje } from "@/lib/estado/producto";
@@ -55,6 +57,8 @@ async function Contenido({
   const gh = await estadoRepositorio(db, e.producto.repo, {
     token: process.env.GITHUB_TOKEN,
   }).catch(() => null);
+  const checklist = await checklistDe(db, e.producto.id, e.producto.version);
+  const aprobaciones = await aprobacionesDe(db, e.producto.id);
 
   return (
     <>
@@ -171,6 +175,38 @@ async function Contenido({
                 ))}
               </ol>
             )}
+          </section>
+          <section
+            className={`${estilos.cuadro} ${estilos.panel}`}
+            aria-labelledby="t-check"
+          >
+            <h2 id="t-check">Checklist de la versión {e.producto.version}</h2>
+            <PanelChecklist
+              slug={e.producto.slug}
+              version={e.producto.version}
+              renglones={checklist.renglones.map((r) => ({
+                texto: r.texto,
+                marcado: r.marcado,
+                por: r.por,
+              }))}
+              puedeEscribir={puedeEscribir(sesion)}
+              rojo={e.semaforo.color === "rojo"}
+              yaAprobada={aprobaciones.some(
+                (a) => a.version === e.producto.version,
+              )}
+            />
+            {aprobaciones.length > 0 ? (
+              <ol className={estilos.linea} style={{ marginTop: 16 }}>
+                {aprobaciones.map((a) => (
+                  <li key={a.version}>
+                    <time dateTime={a.cuando.toISOString()}>
+                      {fecha.format(a.cuando)}
+                    </time>
+                    {a.version} aprobada por {a.por} en {a.color}
+                  </li>
+                ))}
+              </ol>
+            ) : null}
           </section>
         </div>
       </main>

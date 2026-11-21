@@ -56,6 +56,7 @@ describe("estadoDeProducto", () => {
     const r = await estadoDeProducto(db, p.slug, {
       ahora: AHORA,
       ci: async () => "exito",
+      checklistCompleta: true,
     });
 
     expect(r?.semaforo).toEqual({ color: "verde", motivos: [] });
@@ -64,10 +65,27 @@ describe("estadoDeProducto", () => {
     expect(porcentaje(r!.disponibilidad24h)).toBe("100.0 %");
   });
 
+  it("con la checklist de la versión vacía queda en amarillo (dato real de la base)", async () => {
+    const { p, e } = await producto();
+    await historia(e.id);
+    const r = await estadoDeProducto(db, p.slug, {
+      ahora: AHORA,
+      ci: async () => "exito",
+    });
+    expect(r?.semaforo.color).toBe("amarillo");
+    expect(r?.semaforo.motivos.map((m) => m.regla)).toEqual([
+      "checklist_incompleta",
+    ]);
+    expect(r?.producto.version).toBe("v1.0.0");
+  });
+
   it("sin CI conocido nunca es verde", async () => {
     const { p, e } = await producto();
     await historia(e.id);
-    const r = await estadoDeProducto(db, p.slug, { ahora: AHORA });
+    const r = await estadoDeProducto(db, p.slug, {
+      ahora: AHORA,
+      checklistCompleta: true,
+    });
     expect(r?.semaforo.color).toBe("amarillo");
     expect(r?.semaforo.motivos[0]?.regla).toBe("datos_insuficientes");
   });
