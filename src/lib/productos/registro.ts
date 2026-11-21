@@ -1,42 +1,14 @@
 // Caso 2: registrar un producto con sus endpoints. Zod valida forma; validarUrl, SSRF.
 
-import { z } from "zod";
 import type { getDb } from "@/lib/db/client";
 import { endpoints, products } from "@/lib/db/schema";
-import { repoValido } from "@/lib/github/cliente";
 import { resolverDns } from "@/lib/monitor/ejecutar";
+import { esquemaProducto } from "./esquema";
 import { type Resolver, validarUrl } from "@/lib/monitor/ssrf";
 
 type Db = ReturnType<typeof getDb>;
 
-export const esquemaProducto = z.object({
-  nombre: z.string().trim().min(1, "Escribe el nombre.").max(80),
-  slug: z
-    .string()
-    .trim()
-    .regex(
-      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-      "Solo minúsculas, números y guiones (por ejemplo: mi-tienda).",
-    )
-    .max(60),
-  repo: z
-    .string()
-    .trim()
-    .refine(repoValido, "Usa el formato dueño/repositorio."),
-  publico: z.boolean().default(false),
-  endpoints: z
-    .array(
-      z.object({
-        url: z.string().trim().max(500),
-        estadoEsperado: z.number().int().min(100).max(599).default(200),
-        latenciaMaximaMs: z.number().int().min(50).max(10_000).default(1000),
-      }),
-    )
-    .min(1, "Agrega al menos un endpoint.")
-    .max(5, "Máximo 5 endpoints por producto."),
-});
-
-export type EntradaProducto = z.input<typeof esquemaProducto>;
+export { esquemaProducto, type EntradaProducto } from "./esquema";
 
 export type ResultadoRegistro =
   | { ok: true; id: string; slug: string }
